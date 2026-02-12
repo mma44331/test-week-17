@@ -2,6 +2,7 @@ import json
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from main import load_to_mysql
 from confluent_kafka import Consumer, KafkaError
 
 load_dotenv()
@@ -27,4 +28,4 @@ while True:
             print("Consumer error:", msg.error())
         continue
     data = json.loads(msg.value().decode('utf-8'))
-
+    load_to_mysql(data)
