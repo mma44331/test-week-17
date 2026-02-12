@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  api:
+    build: ./producer
+    container_name: app
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONUNBUFFERED: 1
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGO_URI: mongodb://mongodb:27017/
+      MONGO_DB: mymongodb
+      MONGO_COLLECTION: ordersandcustomers
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TOPIC: my_topic
+      DATA_FILE_PATH: app/suspicious_customers_orders.json
+
+    depends_on:
+      - kafka
+
+  consumer:
+    build: ./consumer
+    container_name: consumer
+    environment:
+      PYTHONUNBUFFERED: 1
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: my_analytics_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TOPIC: my_topic
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+      - mysql
+
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root_password
+    depends_on:
+      - mysql
+
+
+  kafka:
+    image: confluentinc/cp-kafka:7.8.3
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_KRAFT_MODE: 'true'
+
+      CLUSTER_ID: '1L6g7nGhU-eAKfL--X25wo'
+      KAFKA_NODE_ID: 1
+
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+    volumes:
+      - kafka_kraft:/var/lib/kafka/data
+
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: my_analytics_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql_init:/docker-entrypoint-initdb.d
+
+volumes:
+  kafka_kraft:
+  mysql_data:
