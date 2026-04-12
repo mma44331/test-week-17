@@ -22,8 +22,11 @@ def send_to_producer():
     page = 0
     while True:
         message = get_data(page)
+        if message:
+            print(message)
         publish_message(message)
-        if not message:
+        if message is None:
+            print("not")
             break
         time.sleep(0.5)
         page += 1

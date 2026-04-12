@@ -17,7 +17,10 @@ services:
       DATA_FILE_PATH: app/suspicious_customers_orders.json
 
     depends_on:
-      - kafka
+      mysql:
+        condition: service_started
+      kafka:
+        condition: service_healthy
 
   consumer:
     build: ./consumer
@@ -31,8 +34,10 @@ services:
       TOPIC: my_topic
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
-      - kafka
-      - mysql
+      mysql:
+        condition: service_started
+      kafka:
+        condition: service_healthy
 
 
   phpmyadmin:
@@ -70,7 +75,11 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
 
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - kafka_kraft:/var/lib/kafka/data
 
@@ -92,6 +101,10 @@ services:
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 5s
+      retries: 10
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql_init:/docker-entrypoint-initdb.d

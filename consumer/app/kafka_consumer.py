@@ -1,5 +1,7 @@
 import json
 import os
+import time
+
 from dotenv import load_dotenv
 from datetime import datetime
 from main import load_to_mysql
@@ -18,7 +20,14 @@ def get_consumer(topic,group_id = "my_group",auto_offset_reset = "earliest"):
     consumer .subscribe([topic])
     return consumer
 
-consumer = get_consumer(topic)
+while True:
+    try:
+        consumer = get_consumer(topic)
+        break
+    except Exception:
+        time.sleep(5)
+
+
 while True:
     msg = consumer.poll(1.0)
     if msg is None:

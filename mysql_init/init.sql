@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS orders (
     customerNumber INT,
     orderDate DATE,
     status VARCHAR(50),
-    comments TEXT,
+    comments TEXT
 );

@@ -55,8 +55,9 @@ def load_to_mysql(data):
             cursor.executemany(order_query, orders_to_insert)
 
         conn.commit()
-        print(f"Successfully processed {len(data)} items: "
-              f"{len(customers_to_insert)} customers, {len(orders_to_insert)} orders.")
+        if customers_to_insert or orders_to_insert:
+            print(f"Successfully processed {len(data)} items: "
+                  f"{len(customers_to_insert)} customers, {len(orders_to_insert)} orders.")
 
     except mysql.connector.Error as err:
         print(f"Database Error: {err}")
